@@ -1,0 +1,6 @@
+Changelog for Unique Channel Titles
+==================================
+
+## 1.0
+
+- Release version
