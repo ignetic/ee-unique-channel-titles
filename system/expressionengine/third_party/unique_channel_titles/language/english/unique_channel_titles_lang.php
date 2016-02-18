@@ -12,6 +12,9 @@ $lang = array(
 	'total_duplicates_found' => 'Total duplicates found',
 	'similar_titles' => 'Other Similar Titles',
 	'edit_titles' => 'Edit Titles',
+	'not_saved' => 'Errors found: your entry has not yet been saved!',
+	'show_confirm' => 'Show confirm dialog?',
+	'show_confirm_description' => 'When a duplicate has been found, this will warn about closing the browser window when the entry has not yet been saved.',
 );
 
 /* End of file lang.unique_channel_titles.php */

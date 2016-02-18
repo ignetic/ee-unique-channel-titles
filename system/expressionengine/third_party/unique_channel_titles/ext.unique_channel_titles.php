@@ -20,10 +20,9 @@ class Unique_channel_titles_ext {
 	public $name			= UNIQUE_CHANNEL_TITLES_NAME;
 	public $version			= UNIQUE_CHANNEL_TITLES_VERSION;
 	public $description		= 'Checks if title already exists within a channel while editing/updating entries';
-	public $docs_url		= '';
+	public $docs_url		= 'https://github.com/ignetic/ee-unique-channel-titles';
 	public $settings_exist	= 'y';
 	
-	private $EE;
 	private $site_id		= 1;
 	
 	/**
@@ -82,6 +81,8 @@ class Unique_channel_titles_ext {
 			}
 		}
 
+		$vars['show_confirm'] = isset($current['show_confirm']) ? $current['show_confirm'] : 'y';
+		
 		$vars['channels'] = $fields;
 
 		return ee()->load->view('settings', $vars, TRUE);
@@ -142,16 +143,6 @@ class Unique_channel_titles_ext {
 			'version'	=> $this->version,
 			'enabled'	=> 'y'
 		);	
-/*
-		$data[] = array(
-			'class'		=> __CLASS__,
-			'method'	=> 'cp_js_end',
-			'hook'		=> 'cp_js_end',
-			'settings'	=> serialize($this->settings),
-			'version'	=> $this->version,
-			'enabled'	=> 'y'
-		);
-*/
 		
 		// insert in database
 		foreach($data as $key => $data) {
@@ -194,6 +185,23 @@ class Unique_channel_titles_ext {
 				ee()->lang->loadfile('unique_channel_titles');
 				
 				ee()->api_channel_entries->_set_error('title_exists', 'title');
+				
+				ee()->javascript->output('$.ee_notice("'.ee()->lang->line('title_exists').'", {type : "error"})');
+				
+				if (isset($this->settings['show_confirm']) && $this->settings['show_confirm'] == 'y')
+				{
+					ee()->javascript->output('
+						$(window).bind("beforeunload", function() {
+							if (confirm) {
+								return "'.lang('not_saved').'";
+							}
+						});
+						$("form#publishForm").submit(function () {
+							$(window).unbind("beforeunload");
+						});
+					');
+				}
+				
 				$this->end_script = TRUE;
 			}
 		}

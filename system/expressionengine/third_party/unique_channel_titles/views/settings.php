@@ -18,6 +18,12 @@ $this->table->add_row(
 	$fields
 );
 
+$this->table->add_row(
+	'<h3>'.lang('show_confirm').'</h3>'.lang('show_confirm_description'),
+	'<label>'.form_radio('show_confirm', 'y', ($show_confirm == 'y' ? TRUE : FALSE)).' Yes</label> &nbsp; '.
+	'<label>'.form_radio('show_confirm', 'n', ($show_confirm != 'y' ? TRUE : FALSE)).' No</label>'
+);
+
 echo $this->table->generate();
 
 ?>

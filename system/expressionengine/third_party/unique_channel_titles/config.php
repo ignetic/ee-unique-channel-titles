@@ -15,7 +15,7 @@ if ( ! defined('UNIQUE_CHANNEL_TITLES_NAME'))
 {
 	define('UNIQUE_CHANNEL_TITLES_NAME',         'Unique Channel Titles');
 	define('UNIQUE_CHANNEL_TITLES_CLASS_NAME',   'unique_channel_titles');
-	define('UNIQUE_CHANNEL_TITLES_VERSION',      '1.0');
+	define('UNIQUE_CHANNEL_TITLES_VERSION',      '1.1');
 }
 
 $config['name'] 	= UNIQUE_CHANNEL_TITLES_NAME;
