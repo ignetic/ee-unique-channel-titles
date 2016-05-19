@@ -239,6 +239,12 @@ class Unique_channel_titles_ext {
 		{
 			return FALSE;
 		}
+		
+		ee()->db->where('class', __CLASS__);
+		ee()->db->update(
+				'extensions', 
+				array('version' => $this->version)
+		);
 	}	
 	
 	// ----------------------------------------------------------------------
