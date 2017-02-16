@@ -37,8 +37,19 @@ class Unique_channel_titles_ext {
 		
 		$this->site_id = ee()->config->item('site_id');
 		
-		$this->_base_url = BASE.AMP.'C=addons_modules'.AMP.'M=show_module_cp'.AMP.'module='.$this->class_name;
-		$this->_settings_url = BASE.AMP.'C=addons_extensions'.AMP.'M=extension_settings'.AMP.'file='.$this->class_name;
+		//fix for undefined BASE Constant
+        if ( defined('BASE') )
+        {
+            $base_url = BASE;
+        }
+		else
+		{
+			$s = (ee()->config->item('admin_session_type') != 'c') ? ee()->session->userdata('session_id') : 0;
+			$base_url = SELF.'?S='.$s.'&amp;D=cp';
+		}
+		
+		$this->_base_url = $base_url.AMP.'C=addons_modules'.AMP.'M=show_module_cp'.AMP.'module='.$this->class_name;
+		$this->_settings_url = $base_url.AMP.'C=addons_extensions'.AMP.'M=extension_settings'.AMP.'file='.$this->class_name;
 		
 	}
 	

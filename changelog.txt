@@ -1,6 +1,10 @@
 Changelog for Unique Channel Titles
 ==================================
 
+## 1.1.2
+
+- **Fixed**: fix for undefined BASE Constant
+
 ## 1.1
 
 - **Added**: Javascript confirm dialog for when a duplicate has been found which will warn about closing the window when the entry has not yet been saved.
