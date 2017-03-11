@@ -192,6 +192,9 @@ class Unique_channel_titles_ext {
 		
 			if(ee()->db->count_all_results())
 			{
+				ee()->load->library('api');
+				ee()->api->instantiate('channel_entries');
+				
 				// Load the unique_channel_titles language file
 				ee()->lang->loadfile('unique_channel_titles');
 				

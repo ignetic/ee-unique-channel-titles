@@ -1,6 +1,10 @@
 Changelog for Unique Channel Titles
 ==================================
 
+## 1.1.3
+
+- **Fixed**: ensured that channel_entries api is loaded
+
 ## 1.1.2
 
 - **Fixed**: fix for undefined BASE Constant
