@@ -42,11 +42,15 @@ class Unique_channel_titles_acc
 			// Zenbu
 			($C == 'addons_modules' && $M == 'show_module_cp' && $module == 'zenbu' && $method == '')
 			||
+			// Dashee
+			($C == 'addons_modules' && $M == 'show_module_cp' && $module == 'dashee' && $method == '')
+			||
 			// Multi editor
 			$C == 'content_edit'
 			||
-			$C == ''
+			$C == false || $C == 'homepage'
 		) {
+
 	
 			// Get settings
 			$settings = array();
@@ -65,7 +69,6 @@ class Unique_channel_titles_acc
 		
 			if (isset($settings['channels']) && !empty($settings['channels']))
 			{
-		
 				foreach ($settings['channels'] as $channel_id)
 				{
 
@@ -101,14 +104,21 @@ class Unique_channel_titles_acc
 					ee()->cp->add_to_foot('
 					<script type="text/javascript">
 						(function($) {
-							$(\'<div class="cp_button" style="margin-left:0;"><a href="'.$this->base.'" style="font-weight:normal;padding:10px 20px;font-size:18px;">&nbsp; You have duplicate '.$total_duplicates.' titles that need attention... &nbsp;</a></div>\').prependTo("#mainContent .contents")
-								.hide()
+							var $alertButton = $(\'<div class="cp_button" style="margin-left: 0"><a href="'.$this->base.'" style="font-weight:normal;padding:10px 20px;font-size:18px;">&nbsp; You have duplicate '.$total_duplicates.' titles that need attention... &nbsp;</a></div><div class="clear_left"></div>\')
+							$home = $("#mainContent").has(".contentMenu.create");
+							if ($home.length > 0) {
+								$alertButton.prependTo($home).css("margin-left", "3.3%");
+							} else {
+								$alertButton.prependTo("#mainContent > .contents > .rightNav, #mainContent > #ee_important_message > .contents");
+							}
+							$alertButton.hide()
 								.css("opacity", 0)
 								.slideDown(500)
 								.animate(
 									{ opacity: 1 },
 									{ duration: 2000 }
 								);
+							$("#mainContent .contents").closest("#ee_important_message").removeClass("closed");
 						})(jQuery);
 					</script>
 					');

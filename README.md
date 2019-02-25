@@ -1,7 +1,8 @@
 Unique Channel Titles
 =====================
 
-ExpressionEngine 2 Addon
+ExpressionEngine Addon
+EE2 -EE3 Compatitble
 
 Check for duplicate entry titles within selected channels
 ---------------------------------------------------------

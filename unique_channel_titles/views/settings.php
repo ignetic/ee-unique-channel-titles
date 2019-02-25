@@ -1,4 +1,4 @@
-<?=form_open('C=addons_extensions'.AMP.'M=save_extension_settings'.AMP.'file=unique_channel_titles');?>
+<?=form_open($form_action);?>
 
 <?php
 $cp_pad_table_template['cell_start'] = '<td valign="top">';

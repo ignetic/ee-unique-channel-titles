@@ -1,6 +1,14 @@
 Changelog for Unique Channel Titles
 ==================================
 
+## 1.3.0
+
+- **Update**: now works on EE3
+
+## 1.1.4
+
+- **Fixed**: ensured that notice displays on homepage including dashee
+
 ## 1.1.3
 
 - **Fixed**: ensured that channel_entries api is loaded

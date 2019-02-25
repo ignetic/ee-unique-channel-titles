@@ -19,11 +19,14 @@ class Unique_channel_titles_ext {
 	public $class_name		= UNIQUE_CHANNEL_TITLES_CLASS_NAME;
 	public $name			= UNIQUE_CHANNEL_TITLES_NAME;
 	public $version			= UNIQUE_CHANNEL_TITLES_VERSION;
-	public $description		= 'Checks if title already exists within a channel while editing/updating entries';
-	public $docs_url		= 'https://github.com/ignetic/ee-unique-channel-titles';
+	public $description		= UNIQUE_CHANNEL_TITLES_DESCRIPTION;
+	public $docs_url		= UNIQUE_CHANNEL_TITLES_DOCS_URL;
 	public $settings_exist	= 'y';
 	
 	private $site_id		= 1;
+	
+	private $_base_url;
+	private $ee3 = false;
 	
 	/**
 	 * Constructor
@@ -37,19 +40,14 @@ class Unique_channel_titles_ext {
 		
 		$this->site_id = ee()->config->item('site_id');
 		
-		//fix for undefined BASE Constant
-        if ( defined('BASE') )
-        {
-            $base_url = BASE;
-        }
-		else
+		if (defined('APP_VER') && version_compare(APP_VER, '3.0.0', '>='))
 		{
-			$s = (ee()->config->item('admin_session_type') != 'c') ? ee()->session->userdata('session_id') : 0;
-			$base_url = SELF.'?S='.$s.'&amp;D=cp';
+			$this->ee3 = TRUE;
 		}
 		
-		$this->_base_url = $base_url.AMP.'C=addons_modules'.AMP.'M=show_module_cp'.AMP.'module='.$this->class_name;
-		$this->_settings_url = $base_url.AMP.'C=addons_extensions'.AMP.'M=extension_settings'.AMP.'file='.$this->class_name;
+		$this->_base_url = $this->ee3 ? ee('CP/URL', 'addons/settings/'.$this->class_name) : BASE.AMP.'C=addons_modules'.AMP.'M=show_module_cp'.AMP.'module='.$this->class_name; 
+		$this->_settings_url = $this->ee3 ? ee('CP/URL', 'addons/settings/'.$this->class_name) : BASE.AMP.'C=addons_extensions'.AMP.'M=extension_settings'.AMP.'file='.$this->class_name; 
+		$this->_settings_form_action = $this->ee3 ? ee('CP/URL', 'addons/settings/'.$this->class_name.'/save') : 'C=addons_extensions'.AMP.'M=extension_settings'.AMP.'file='.$this->class_name; 
 		
 	}
 	
@@ -95,6 +93,7 @@ class Unique_channel_titles_ext {
 		$vars['show_confirm'] = isset($current['show_confirm']) ? $current['show_confirm'] : 'y';
 		
 		$vars['channels'] = $fields;
+		$vars['form_action'] = $this->_settings_form_action;
 
 		return ee()->load->view('settings', $vars, TRUE);
 	}
@@ -148,8 +147,8 @@ class Unique_channel_titles_ext {
 		
 		$data[] = array(
 			'class'		=> __CLASS__,
-			'method'	=> 'entry_submission_start',
-			'hook'		=> 'entry_submission_start',
+			'method'	=> ($this->ee3 ? 'before_channel_entry_save' : 'entry_submission_start'),
+			'hook'		=> ($this->ee3 ? 'before_channel_entry_save' : 'entry_submission_start'),
 			'settings'	=> serialize($this->settings),
 			'version'	=> $this->version,
 			'enabled'	=> 'y'
@@ -167,39 +166,111 @@ class Unique_channel_titles_ext {
 	/**
 	 * entry_submission_start
 	 *
-	 * @param 
-	 * @return 
+	 * @param $channel_id (int)
+	 * @param $autosave (bool)
+	 * @return void
 	 */
 	function entry_submission_start($channel_id=0, $autosave=FALSE)
 	{
-		
+		$entry_id = ee()->input->post('entry_id');
+		$title = ee()->input->post('title');
+
+		$this->find_duplicates($channel_id, $entry_id, $title, $autosave);
+	}
+	
+	
+	/**
+	 * before_channel_entry_save
+	 *
+	 * @param $entry (object) – Current ChannelEntry model object
+	 * @param $values (array) – The ChannelEntry model object data as an array
+	 * @return void
+	 */
+	function before_channel_entry_save($entry, $values)
+	{
+		$channel_id = $values['channel_id'];
+		$title = $values['title'];
+		$entry_id = isset($values['entry_id']) ? $values['entry_id'] : 0;
+		$autosave = isset($values['autosave']) ? $values['autosave'] : FALSE;
+
+		$this->find_duplicates($channel_id, $entry_id, $title, $autosave);
+	}
+	
+	
+	/**
+	 * find_duplicates
+	 *
+	 * @param $channel_id (int)
+	 * @param $entry_id (int)
+	 * @param $title (string)
+	 * @return void
+	 */
+	function find_duplicates($channel_id=0, $entry_id, $title, $autosave=FALSE)
+	{
+		if (ee()->input->post('ACT')) return; // allow wcloner
 		if ( ! $channel_id || $autosave === TRUE) return;
 		if ( ! isset($this->settings['channels']) || empty($this->settings['channels'])) return;
-		
+
 		if (is_array($this->settings['channels']) && in_array($channel_id, $this->settings['channels']))
 		{
-			$entry_id = ee()->input->post('entry_id');
-			$title = ee()->input->post('title');
+			//$entry_id = ee()->input->post('entry_id');
+			//$title = ee()->input->post('title');
+			
+			$duplicate_entries = '';
 
 			ee()->db
-				->select('title')
-				->from('channel_titles')
+				->select('title, entry_id')
 				->where('channel_id', $channel_id)
 				->where('title', $title)
 				->where('site_id', $this->site_id)
-				->where('entry_id !=', $entry_id)
-				->limit(1);
-		
-			if(ee()->db->count_all_results())
+				//->where('entry_id !=', $entry_id)
+				->limit(10);
+				
+			if ($entry_id)
 			{
-				ee()->load->library('api');
-				ee()->api->instantiate('channel_entries');
+				ee()->db->where('entry_id !=', $entry_id);
+			}
+			
+			$query = ee()->db->get('channel_titles');
+		
+			if($query->num_rows() > 0)
+			{
+				$duplicate_entries .= '<ul>';
+				foreach ($query->result_array() as $row)
+				{
+					$duplicate_entries .= '</li><b>'.$row['title'].'</b> (ID '.$row['entry_id'].')</li>';
+				}
+				$duplicate_entries .= '</ul>';
 				
 				// Load the unique_channel_titles language file
 				ee()->lang->loadfile('unique_channel_titles');
-				
-				ee()->api_channel_entries->_set_error('title_exists', 'title');
-				
+			
+				if ($this->ee3)
+				{
+
+					ee('CP/Alert')->makeInline('entry-form')
+						->asIssue()
+						->withTitle(lang('title_exists'))
+						->addToBody($duplicate_entries)
+						->defer();
+
+					if ($entry_id)
+					{
+						ee()->functions->redirect(ee('CP/URL')->make('publish/edit/entry/' . $entry_id, ee()->cp->get_url_state()));				
+					} 
+					else
+					{
+						ee()->output->show_user_error('submission_error', lang('title_exists'));
+					}	
+
+					//ee()->output->show_user_error('title_exists', ee()->lang->line('title_exists'));
+				}
+				else
+				{
+
+					ee()->api_channel_entries->_set_error('title_exists', 'title');
+				}
+
 				ee()->javascript->output('$.ee_notice("'.ee()->lang->line('title_exists').'", {type : "error"})');
 				
 				if (isset($this->settings['show_confirm']) && $this->settings['show_confirm'] == 'y')
@@ -220,6 +291,7 @@ class Unique_channel_titles_ext {
 			}
 		}
 	}
+	
 
 
 	// ----------------------------------------------------------------------
@@ -259,7 +331,7 @@ class Unique_channel_titles_ext {
 				'extensions', 
 				array('version' => $this->version)
 		);
-	}	
+	}
 	
 	// ----------------------------------------------------------------------
 }

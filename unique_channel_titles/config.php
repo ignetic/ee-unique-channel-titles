@@ -13,9 +13,11 @@
 
 if ( ! defined('UNIQUE_CHANNEL_TITLES_NAME'))
 {
-	define('UNIQUE_CHANNEL_TITLES_NAME',         'Unique Channel Titles');
-	define('UNIQUE_CHANNEL_TITLES_CLASS_NAME',   'unique_channel_titles');
-	define('UNIQUE_CHANNEL_TITLES_VERSION',      '1.1.3');
+	define('UNIQUE_CHANNEL_TITLES_NAME',        'Unique Channel Titles');
+	define('UNIQUE_CHANNEL_TITLES_CLASS_NAME',  'unique_channel_titles');
+	define('UNIQUE_CHANNEL_TITLES_DESCRIPTION', 'Checks if title already exists within a channel while editing/updating entries');
+	define('UNIQUE_CHANNEL_TITLES_VERSION',     '1.3.0');
+	define('UNIQUE_CHANNEL_TITLES_DOCS_URL', 	'https://github.com/ignetic/ee-unique-channel-titles'); 
 }
 
 $config['name'] 	= UNIQUE_CHANNEL_TITLES_NAME;
