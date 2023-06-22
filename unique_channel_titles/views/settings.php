@@ -1,10 +1,10 @@
+<style>.mainTable td {white-space:normal;}</style>
 <?=form_open($form_action);?>
-
 <?php
 $cp_pad_table_template['cell_start'] = '<td valign="top">';
 $this->table->set_template($cp_pad_table_template);
 $this->table->set_heading(
-    array('data' => lang('preference'), 'style' => 'width:50%;'),
+    array('data' => lang('preference'), 'style' => 'width:35%;'),
     lang('setting')
 );
 
@@ -28,7 +28,7 @@ echo $this->table->generate();
 
 ?>
 
-<p><?=form_submit('submit', lang('submit'), 'class="submit"')?></p>
+<p><?=form_submit('submit', lang('submit'), 'class="submit btn"')?></p>
 <?php $this->table->clear()?>
 <?=form_close()?>
 <?php

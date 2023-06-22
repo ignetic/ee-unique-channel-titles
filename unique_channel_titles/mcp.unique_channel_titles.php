@@ -11,13 +11,11 @@
 
 require_once PATH_THIRD.'unique_channel_titles/config.php';
 
-
 class Unique_channel_titles_mcp {
 
 	public $class_name = UNIQUE_CHANNEL_TITLES_CLASS_NAME; 
 	public $version = UNIQUE_CHANNEL_TITLES_VERSION;
-	
-	private $_base_url;
+
 	private $site_id = 1;
 	
 	/**
@@ -25,15 +23,6 @@ class Unique_channel_titles_mcp {
 	 */
 	public function __construct()
 	{
-		
-		$this->_base_url = BASE.AMP.'C=addons_modules'.AMP.'M=show_module_cp'.AMP.'module='.$this->class_name;
-		$this->_settings_url = BASE.AMP.'C=addons_extensions'.AMP.'M=extension_settings'.AMP.'file='.$this->class_name;
-		
-		ee()->cp->set_right_nav(array(
-			'channel_titles'	=> $this->_base_url,
-			'settings'	=> $this->_settings_url
-		));
-		
 		$this->site_id = ee()->config->item('site_id');
 		
 	}
@@ -47,7 +36,7 @@ class Unique_channel_titles_mcp {
 	 */
 	public function index()
 	{
-						
+
 		if(version_compare(APP_VER, '2.6', '>'))
 		{
 			ee()->view->cp_page_title = lang('unique_channel_titles_module_name');
@@ -63,16 +52,7 @@ class Unique_channel_titles_mcp {
 		$vars = array();
 		
 		// Get settings
-		$settings = array();
-		$settings_query = ee()->db->select('settings')
-				->from('extensions')
-				->where(array('class' => 'Unique_channel_titles_ext', 'hook' => 'entry_submission_start'))
-				->get();
-		
-		foreach ($settings_query->result_array() as $row)
-		{
-			$settings = unserialize($row['settings']);
-		}
+		$settings = $this->get_settings();
 
 
 		$vars['entries'] = array();
@@ -93,14 +73,14 @@ class Unique_channel_titles_mcp {
 			{
 				
 				$channel_id = $channels_row['channel_id'];
-				
+
 				// Get status colours
 				$status_query = ee()->db->select('status, highlight')
 						->from('statuses')
-						->where('statuses.site_id', $this->site_id)
-						->where('channel_id', $channel_id)
-						->join('status_groups', 'status_groups.group_id = statuses.group_id')
-						->join('channels', 'channels.status_group = statuses.group_id')
+						//->where('statuses.site_id', $this->site_id)
+						//->where('channel_id', $channel_id)
+						//->join('status_groups', 'status_groups.group_id = statuses.group_id')
+						//->join('channels', 'channels.status_group = statuses.group_id')
 						->get();
 						
 				foreach ($status_query->result_array() as $status_row)
@@ -147,14 +127,8 @@ class Unique_channel_titles_mcp {
 					$vars['entries'][$channel_id][$title]['entries'][$row['entry_id']]['status'] = $row['status'];
 					$vars['entries'][$channel_id][$title]['count'] = $row['cnt'];
 					
-					if (function_exists('cp_url'))
-					{
-						$vars['entries'][$channel_id][$title]['entries'][$row['entry_id']]['edit_url'] = cp_url('content_publish/entry_form', array('channel_id' => $channel_id, 'entry_id' => $row['entry_id']));
-					}
-					else
-					{
-						$vars['entries'][$channel_id][$title]['entries'][$row['entry_id']]['edit_url'] = BASE.AMP.'C=content_publish'.AMP.'M=entry_form'.AMP.'channel_id='.$channel_id.AMP.'entry_id='.$row['entry_id'];
-					}
+					$vars['entries'][$channel_id][$title]['entries'][$row['entry_id']]['edit_url'] = ee('CP/URL')->make('publish/edit/entry/'.$row['entry_id']);
+
 					
 				}
 
@@ -186,50 +160,44 @@ class Unique_channel_titles_mcp {
 		}
 		else
 		{
-			$vars['error'] = '<p clas="button"><a href="'.$this->_settings_url.'" class="submit">'.lang('select_channels').'</a></p>';
+			$vars['error'] = '<p><a href="'.ee('CP/URL', 'addons/settings/'.$this->class_name.'/settings').'" class="button button--primary">'.lang('select_channels').'</a></p>';
 		}
-		
-		
-		// Form actions
-		ee()->db->select('module_name')
-				->from('modules')
-				->where('module_name', 'Zenbu');
-				
-		if (ee()->db->count_all_results() > 90)
-		{
-			$vars['form_action'] = 'C=addons_modules'.AMP.'M=show_module_cp'.AMP.'module=zenbu'.AMP.'method=multi_edit';
-		}
-		else
-		{
-			$vars['form_action'] = 'C=content_edit'.AMP.'M=multi_edit_form';
-		}
-		
-		$vars['form_hidden'] = array(
-			'action' => 'edit',
-			'pageurl' => base64_encode($this->_base_url),
-			'redirect_override' => base64_encode($this->_base_url)
-		);
-		
+
 		ee()->cp->add_to_head('
 			<style type="text/css" media="screen">
 				#unique_channel_titles_form .module_title {
 					font-size: 20px;
 				}
-				#unique_channel_titles_form #my_accordion h3.accordion {
+				#unique_channel_titles_form #my_accordion h3 {
+					font-size: 22px;
 					padding-top: 6px;
 					padding-bottom: 6px;
+				}
+				#unique_channel_titles_form #my_accordion h4 {
+					font-size: 16px;
+				}
+				#unique_channel_titles_form #my_accordion h4 .fa-chevron-down {
+
+					margin-left: 20px;
 				}
 				#unique_channel_titles_form #my_accordion h3.accordion .total {
 					opacity: 0.5;
 				}
+				#unique_channel_titles_form #my_accordion .details {
+
+				}
 				#unique_channel_titles_form #my_accordion h4.accordion {
 					cursor: pointer;
-					padding: 10px 10px 10px 26px;
-					margin: 3px; 0;
+					padding: 10px 20px;
+					margin: 0;
 					border: 1px solid #ccc;
 					background: #fff;
 					border-radius: 3px;
 					position: relative;
+				}
+				#unique_channel_titles_form #my_accordion ul,
+				#unique_channel_titles_form #my_accordion li {
+					list-style-type: none;
 				}
 				#unique_channel_titles_form #my_accordion h4.accordion .ui-icon {
 					left: 0.5em;
@@ -248,12 +216,23 @@ class Unique_channel_titles_mcp {
 					border: 1px solid #fff;
 				}
 				#unique_channel_titles_form #my_accordion .accordion .count {
-					float: right;
 					font-weight: normal;
 					margin-right: 8px;
+					border: 1px solid #ccc;
+					text-align: center;
+					width: 40px;
+					border-radius: 20px;
+					display: block;
+					float: left;
 				}
+
 				#unique_channel_titles_form #my_accordion .entries {
-					margin-left: 10px;
+					padding: 10px;
+					border: 1px solid #ccc;
+					border-radius: 3px;
+					margin-top: -2px;
+					margin-bottom: 0;
+					background: #fcfcfc;
 				}
 				#unique_channel_titles_form #my_accordion .entries .url_title {
 					opacity: 0.5;
@@ -266,7 +245,10 @@ class Unique_channel_titles_mcp {
 				#unique_channel_titles_form #my_accordion .entries > li {
 					padding: 6px;
 					margin: 0;
-					border-bottom: 1px solid #ccc;
+					border-bottom: 1px solid #e6e6e6;
+				}
+				#unique_channel_titles_form #my_accordion .entries > li:last-child {
+					border-bottom: none;
 				}
 				#unique_channel_titles_form #my_accordion .entries > li a {
 					margin: 0 6px;
@@ -294,12 +276,12 @@ class Unique_channel_titles_mcp {
 		ee()->cp->add_to_foot('
 			<script type="text/javascript">
 			(function($) {
-				$("#my_accordion").accordion({autoHeight: false, header: "h3", collapsible: true}); 
-				$("#my_accordion h4").click(function() {
+				$("#my_accordion .details").accordion({autoHeight: false, header: "h3", collapsible: true}); 
+				$("#my_accordion .details h4").click(function() {
 					$(this).next("ul").slideToggle(100);
-				}).next("ul").hide();
-				$("form#unique_channel_titles_form").submit(function(e) {
-					if ($("input[name=toggle[]]:checked", this).length == 0) {
+				}).next("ul:not(.open)").hide();
+				$("form#unique_channel_titles_form").on("submit", function(e) {
+					if ($("input[name=selection[]]:checked", this).length == 0) {
 						alert("Select some titles to edit first");
 						return false;
 					}
@@ -308,14 +290,133 @@ class Unique_channel_titles_mcp {
 			})(jQuery);
 			</script>
 		');
-	
+		
+		ee()->javascript->set_global([
+			'lang.remove_confirm' => lang('entry') . ': <b>### ' . lang('entries') . '</b>',
+
+			'publishEdit.sequenceEditFormUrl' => ee('CP/URL')->make('publish/edit/entry/###')->compile(),
+			'publishEdit.bulkEditFormUrl' => ee('CP/URL')->make('publish/bulk-edit')->compile(),
+			'bulkEdit.lang' => [
+				'selectedEntries'       => lang('selected_entries'),
+				'filterSelectedEntries' => lang('filter_selected_entries'),
+				'noEntriesFound'        => sprintf(lang('no_found'), lang('entries')),
+				'showing'               => lang('showing'),
+				'of'                    => lang('of'),
+				'clearAll'              => lang('clear_all'),
+				'removeFromSelection'   => lang('remove_from_selection'),
+			]
+		]);
+
+		ee()->cp->add_js_script(array(
+			'file' => array(
+				'cp/date_picker',
+				'cp/publish/entry-list',
+				'components/bulk_edit_entries',
+				'cp/publish/bulk-edit',
+			),
+		));
+
+		$modal = ee('View')->make('ee:_shared/modal-bulk-edit')->render([
+			'name' => 'modal-bulk-edit',
+		]);
+
+		ee('CP/Modal')->addModal('bulk-edit', $modal);
+		
+		$modal = ee('View')->make('ee:_shared/modal-form')->render([
+			'name' => 'modal-form',
+			'contents' => '',
+		]);
+		ee('CP/Modal')->addModal('modal-form', $modal);
+
 		return ee()->load->view('index', $vars, TRUE);
 
 	}
 	
+	/**
+	 * Settings Form
+	 *
+	 * @return  void
+	 */
+	function settings()
+	{
+		$settings_form_action = ee('CP/URL', 'addons/settings/'.$this->class_name.'/save_settings'); 
+
+		// Get settings
+		$settings = $settings = $this->get_settings();
+
+		ee()->load->helper('form');
+		ee()->load->library('table');
+
+		$vars = array();
+
+		$channels = ee()->db
+			->select('channel_id, channel_title')
+			->where('site_id', $this->site_id)
+			->order_by('channel_title')
+			->get('channels');
+		
+		$fields = array();
+
+		if($channels->num_rows() > 0)
+		{
+			foreach($channels->result() as $channel)
+			{
+				$fields[$channel->channel_id]['title'] = $channel->channel_title;
+				$fields[$channel->channel_id]['selected'] = (isset($settings['channels']) && is_array($settings['channels']) && in_array($channel->channel_id, $settings['channels'])) ? TRUE : FALSE;
+			}
+		}
+
+		$vars['show_confirm'] = isset($settings['show_confirm']) ? $settings['show_confirm'] : 'y';
+		
+		$vars['channels'] = $fields;
+		$vars['form_action'] = $settings_form_action;
+
+		return ee()->load->view('settings', $vars, TRUE);
+	}
 
 
+	/**
+	 * Save Settings
+	 *
+	 * This function provides a little extra processing and validation
+	 * than the generic settings form.
+	 *
+	 * @return void
+	 */
+	function save_settings()
+	{
+		if (empty($_POST))
+		{
+			show_error(lang('unauthorized_access'));
+		}
+
+		unset($_POST['submit']);
+
+		ee()->db->where('class', 'Unique_channel_titles_ext');
+		ee()->db->update('extensions', array('settings' => serialize($_POST)));
+
+		ee()->session->set_flashdata(
+			'message_success',
+			lang('preferences_updated')
+		);
+
+		ee()->functions->redirect(ee('CP/URL', 'addons/settings/'.$this->class_name));
+	}
 	
+	private function get_settings()
+	{
+		$settings = array();
+		$settings_query = ee()->db->select('settings')
+				->from('extensions')
+				->where(array('class' => 'Unique_channel_titles_ext', 'hook' => 'before_channel_entry_save'))
+				->get();
+		
+		foreach ($settings_query->result_array() as $row)
+		{
+			$settings = unserialize($row['settings']);
+		}
+		return $settings;
+	}
+
 }
-/* End of file mcp.unique_channel_titles.php */
-/* Location: /system/expressionengine/third_party/unique_channel_titles/mcp.unique_channel_titles.php */
+// EOF

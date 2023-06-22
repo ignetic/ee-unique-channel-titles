@@ -7,6 +7,6 @@ return array(
 	'name'           => UNIQUE_CHANNEL_TITLES_NAME,
 	'description'    => UNIQUE_CHANNEL_TITLES_DESCRIPTION,
 	'version'        => UNIQUE_CHANNEL_TITLES_VERSION,
-	'namespace'      => '\\',
+	'namespace'      => 'Ignetic\UniqueChannelTitles',
 	'settings_exist' => TRUE,
 );
